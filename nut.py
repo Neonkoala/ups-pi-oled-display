@@ -112,19 +112,19 @@ def update_display(full=False):
 
     # Battery icon
 
-    line_thickness = 2.0
+    line_thickness = 2
 
-    radius = 5.0
-    margin = 3.0
-    spacing = 2.0
-    height = 106.0
-    width = 50.0
+    radius = 5
+    margin = 3
+    spacing = 2
+    height = 106
+    width = 50
 
-    top_inset = 10.0
-    top_height = 10.0
+    top_inset = 10
+    top_height = 10
 
-    segment_count = 5.0
-    segment_height = 18.0
+    segment_count = 5
+    segment_height = 18
 
     segment_x = margin + line_thickness + spacing
     segment_y = margin + top_height + line_thickness
