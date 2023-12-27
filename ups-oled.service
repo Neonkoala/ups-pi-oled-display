@@ -3,9 +3,8 @@ Description=Python UPS OLED NUT Monitor
 
 [Service]
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python /usr/lib/ups-oled/nut.py
+ExecStart=/usr/bin/python3 /usr/lib/ups-oled/nut.py
 Restart=on-failure
-Type=notify
 WorkingDirectory=/usr/lib/ups-oled
 
 [Install]

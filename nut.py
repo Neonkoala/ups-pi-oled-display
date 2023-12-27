@@ -3,11 +3,11 @@
 import logging
 import os
 import psutil
+import PyNUT
 import time
 import sys
 from datetime import timedelta
 from enum import Enum
-from nut2 import PyNUTClient
 from PIL import Image, ImageDraw, ImageFont
 
 libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'waveshare')
@@ -88,15 +88,35 @@ def ups_other_status(status: UPSStatus):
         return UPSOtherStatus.none
 
 
+def convert_dict(data):
+    if isinstance(data,str):
+        return data
+    elif isinstance(data,bytes):
+        return data.decode()
+    elif isinstance(data,dict):
+        newdata = {}  # Build a new dict
+        for key, val in data.items():
+            # Simplify code path by just doing decoding in conditional, insertion unconditional
+            if isinstance(key,bytes):
+                key = key.decode()
+            newdata[key] = convert_dict(val)  # Update new dict (and use the val since items() gives it for free)
+        return newdata
+    elif isinstance(data,list):
+        return [convert_dict(dt) for dt in data]
+    else:
+        return data
+
+
 def update_display(full=False):
     # Init
     ups_battery_charge = "N/A"
     ups_battery_remaining = "N/A"
 
     # Data gathering
-    client = PyNUTClient()
-    ups = client.list_vars("ups")
+    client = PyNUT.PyNUTClient()
+    ups_raw = client.GetUPSVars("ups")
 
+    ups = convert_dict(ups_raw)
     ups_battery_charge = ups["battery.charge"]
     ups_battery_remaining_seconds = ups["battery.runtime"]
     ups_battery_remaining = str(round(int(ups_battery_remaining_seconds) / 60))
@@ -135,7 +155,7 @@ def update_display(full=False):
 
     # Top contact
     draw.rounded_rectangle(((top_inset + margin, margin), (margin + width - top_inset, margin + top_height)),
-                           radius=5, fill=0, corners=(True, True, False, False))
+                           radius=5, fill=0)#, corners=(True, True, False, False))
 
     # Casing
     draw.rounded_rectangle(((margin, margin + top_height), (margin + width, margin + top_height + height)),
@@ -145,7 +165,7 @@ def update_display(full=False):
     draw_segments = (float(ups_battery_charge) / 100) * segment_count
 
     i = 0
-    while i < draw_segments - 1:
+    while i < draw_segments:
         rect_index = i + 1
         draw.rectangle(((segment_x, segment_max - (i * spacing) - (rect_index * segment_height)),
                         (segment_width, segment_max - (i * spacing) - (i * segment_height))), fill=0)
@@ -185,7 +205,7 @@ def update_display(full=False):
     draw.text((text_offset, (2 * font) + (2 * text_spacing)), "Remaining: " + ups_battery_remaining + " mins",
               font=font20, fill=0)
     draw.text((text_offset, (3 * font) + (3 * text_spacing)), "Load: " + ups_load + "W", font=font20, fill=0)
-    draw.text((text_offset, (4 * font) + (4 * text_spacing)), "Up: " + str(timedelta(seconds=uptime).split(".")[0], font=font20, fill=0)
+    draw.text((text_offset, (4 * font) + (4 * text_spacing)), "Up: " + str(timedelta(seconds=uptime)).split(".")[0], font=font20, fill=0)
 
     # Fix rotation by 180deg
     image = image.rotate(180)  # rotate
@@ -206,8 +226,6 @@ try:
     # epd.Clear(0xFF)
 
     update_display(True)
-
-    systemd.daemon.notify('READY=1')
 
     while True:
         logging.info("Display update")
