@@ -162,7 +162,7 @@ def update_display(full=False):
                            radius=radius, width=line_thickness, outline=0)
 
     # Calculate & draw battery segments
-    draw_segments = (float(ups_battery_charge) / 100) * segment_count
+    draw_segments = int((float(ups_battery_charge) / 100) * segment_count)
 
     i = 0
     while i < draw_segments:
