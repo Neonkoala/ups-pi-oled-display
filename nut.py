@@ -2,13 +2,13 @@
 # -*- coding:utf-8 -*-
 import logging
 import os
+import psutil
 import time
 import sys
 from datetime import timedelta
 from enum import Enum
 from nut2 import PyNUTClient
 from PIL import Image, ImageDraw, ImageFont
-from uptime import uptime
 
 libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'waveshare')
 if os.path.exists(libdir):
@@ -103,6 +103,8 @@ def update_display(full=False):
     ups_load = ups["ups.load"]
     ups_status_code = ups["ups.status"]
 
+    uptime = time.time() - psutil.boot_time()
+
     # Drawing on the image
     font20 = ImageFont.truetype(os.path.join(libdir, 'GillSans.ttf'), 20)
 
@@ -149,7 +151,7 @@ def update_display(full=False):
                         (segment_width, segment_max - (i * spacing) - (i * segment_height))), fill=0)
         i += 1
 
-    text_margin = 10
+    text_margin = 8
     text_offset = (2 * margin) + width + text_margin
     text_spacing = 4
     font = 20
@@ -183,8 +185,7 @@ def update_display(full=False):
     draw.text((text_offset, (2 * font) + (2 * text_spacing)), "Remaining: " + ups_battery_remaining + " mins",
               font=font20, fill=0)
     draw.text((text_offset, (3 * font) + (3 * text_spacing)), "Load: " + ups_load + "W", font=font20, fill=0)
-    draw.text((text_offset, (4 * font) + (4 * text_spacing)), "Up: " + str(timedelta(seconds=uptime())).split(".")[0],
-              font=font20, fill=0)
+    draw.text((text_offset, (4 * font) + (4 * text_spacing)), "Up: " + str(timedelta(seconds=uptime).split(".")[0], font=font20, fill=0)
 
     # Fix rotation by 180deg
     image = image.rotate(180)  # rotate
@@ -205,6 +206,8 @@ try:
     # epd.Clear(0xFF)
 
     update_display(True)
+
+    systemd.daemon.notify('READY=1')
 
     while True:
         logging.info("Display update")
